@@ -3,10 +3,10 @@
 <h1>Home</h1>
 <p><%= startingContent %></p>
 
-<%texts.forEach(function(text){%>
-<h1><%=text.title%></h1>
-<p><%=text.post.substring(0, 100)+ "..."%>
-  <a href="/posts/<%=text.title%>">Read More</a>
+<%blogs.forEach(function(blog){%>
+<h1><%=blog.name%></h1>
+<p><%=blog.post.substring(0, 100)+ "..."%>
+  <a href="/posts/<%=blog.name%>">Read More</a>
 </p>
 <%});%>
 

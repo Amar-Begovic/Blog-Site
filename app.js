@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const _ = require("lodash");
+const mongoose = require('mongoose');
 
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
 const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pellentesque. Dictumst vestibulum rhoncus est pellentesque elit ullamcorper. Non diam phasellus vestibulum lorem sed. Platea dictumst quisque sagittis purus sit. Egestas sed sed risus pretium quam vulputate dignissim suspendisse. Mauris in aliquam sem fringilla. Semper risus in hendrerit gravida rutrum quisque non tellus orci. Amet massa vitae tortor condimentum lacinia quis vel eros. Enim ut tellus elementum sagittis vitae. Mauris ultrices eros in cursus turpis massa tincidunt dui.";
@@ -18,16 +19,22 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(express.static("public"));
 
-let texts = [];
+mongoose.connect('mongodb://localhost:27017/blogs');
 
+const blogsSchema= new mongoose.Schema({
+  name: String,
+  post: String
+})
+
+const Blog = mongoose.model("Blog",  blogsSchema)
 
 
 app.get("/", function(req, res) {
-  res.render("home.ejs", {
-    startingContent: homeStartingContent,
-    texts: texts
+  Blog.find({}, function(err, foundBlog){
+    if(!err){
+      res.render("home.ejs", {startingContent: homeStartingContent, blogs : foundBlog  });
+    }
   });
-
 });
 
 
@@ -50,12 +57,13 @@ app.get("/compose", function(req, res) {
 
 
 app.post("/compose", function(req, res) {
-  const text = {
-    title: req.body.CompTitle,
-    post: req.body.CompPost,
-  };
-
-  texts.push(text);
+  const name = req.body.CompTitle;
+  const post =    req.body.CompPost;
+const saveBlog = new Blog ({
+  name : name,
+  post : post
+});
+saveBlog.save();
   res.redirect("/");
 
 });
@@ -63,17 +71,21 @@ app.post("/compose", function(req, res) {
 app.get("/posts/:postName", function(req, res){
   const requstedTitle = _.lowerCase(req.params.postName) ;
 
-  texts.forEach(function (text) {
-    const storedTitle = _.lowerCase(text.title);
-
-    if (storedTitle===requstedTitle){
-      res.render("post.ejs", {
-        title:text.title,
-        content:text.post
+  Blog.find({}, function(err, foundBlog){
+    if(!err){
+      foundBlog.forEach(function(sBlog){
+        const storedTitle = _.lowerCase(sBlog.name);
+        if (storedTitle===requstedTitle){
+          res.render("post.ejs", {
+            title:sBlog.name,
+            content:sBlog.post
+          });
+        }
       });
     }
   });
-});
+  });
+
 
 
 
